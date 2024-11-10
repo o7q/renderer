@@ -1,8 +1,12 @@
 #include "console.h"
 
+#if defined(_WIN32) || defined(WIN32)
+#include <windows.h>
+#endif
+
 void clear_screen()
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(WIN32)
     HANDLE hOut;
     COORD Position;
 
@@ -11,5 +15,7 @@ void clear_screen()
     Position.X = 0;
     Position.Y = 0;
     SetConsoleCursorPosition(hOut, Position);
+#elif defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+    printf("\033[H\033[J");
 #endif
 }
