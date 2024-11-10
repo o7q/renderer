@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "geometry/geometry.h"
+
 enum Mat2_Type
 {
     MAT2_FLOAT,
@@ -29,6 +31,6 @@ float mat2_read_float(struct Mat2 *matrix, size_t y, size_t x);
 void mat2_write_char(struct Mat2 *matrix, size_t y, size_t x, char value);
 char mat2_read_char(struct Mat2 *matrix, size_t y, size_t x);
 
-struct Vec3 vec3_multiply_mat2_4x4(struct Mat2 *matrix, struct Vec3 i_vec);
+void vec3_multiply_mat2_4x4(struct Mat2 *matrix, struct Vec3 i_vec, struct Vec3 *i_vec2);
 
 #endif

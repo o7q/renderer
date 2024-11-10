@@ -6,6 +6,11 @@ struct Viewport *viewport_create(int width, int height)
 {
     struct Viewport *viewport = malloc(sizeof(struct Viewport));
 
+    if (!viewport)
+    {
+        return NULL;
+    }
+
     viewport->width = width;
     viewport->height = height;
 

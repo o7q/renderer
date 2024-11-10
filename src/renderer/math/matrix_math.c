@@ -2,7 +2,7 @@
 
 #include "geometry/geometry.h"
 
-struct Vec3 vec3_multiply_mat2_4x4(struct Mat2 *matrix, struct Vec3 i_vec)
+void vec3_multiply_mat2_4x4(struct Mat2 *matrix, struct Vec3 i_vec, struct Vec3 *i_vec2)
 {
     struct Vec3 o_vec;
 
@@ -33,5 +33,5 @@ struct Vec3 vec3_multiply_mat2_4x4(struct Mat2 *matrix, struct Vec3 i_vec)
         o_vec.z /= w;
     }
 
-    return o_vec;
+    *i_vec2 = o_vec;
 }

@@ -10,12 +10,11 @@ int main(void)
 {
     struct World *world = world_create(100000);
     struct Camera *camera = camera_create();
-    struct Viewport *viewport = viewport_create(100, 50);
+    struct Viewport *viewport = viewport_create(100, 60);
 
-    struct Mesh *cube = geometry_create_cube();
+    struct Mesh *cube = mesh_create_cube();
 
     world_add_mesh(world, cube);
-
     bool running = true;
 
     while (running)

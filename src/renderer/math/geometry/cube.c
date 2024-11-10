@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-struct Mesh *geometry_create_cube()
+struct Mesh *mesh_create_cube()
 {
     struct Mesh *cube = malloc(sizeof(struct Mesh));
 

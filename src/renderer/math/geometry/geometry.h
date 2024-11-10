@@ -21,7 +21,7 @@ struct Mesh
     struct Triangle *tris;
 };
 
-struct Mesh *geometry_create_cube();
+struct Mesh *mesh_create_cube();
 
 void mesh_delete(struct Mesh *mesh);
 
