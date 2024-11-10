@@ -1,2 +1,2 @@
 # renderer
-another c renderer.
+another c renderer
