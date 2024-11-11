@@ -1,13 +1,11 @@
-#include "geometry.h"
+#include "mesh.h"
+#include "types.h"
 
 #include <stdlib.h>
 
-struct Mesh *mesh_create_cube()
+struct Mesh *mesh_create_cube(float x, float y, float z)
 {
-    struct Mesh *cube = malloc(sizeof(struct Mesh));
-
-    cube->tri_count = 12;
-    cube->tris = malloc(cube->tri_count * sizeof(struct Triangle));
+    struct Mesh *cube = mesh_init(12);
 
     // south
     cube->tris[0].a = (struct Vec3){0.0f, 0.0f, 0.0f};
@@ -65,17 +63,17 @@ struct Mesh *mesh_create_cube()
 
     for (int i = 0; i < cube->tri_count; ++i)
     {
-        cube->tris[i].a.x *= 10.0f;
-        cube->tris[i].a.y *= 10.0f;
-        cube->tris[i].a.z *= 10.0f;
-        
-        cube->tris[i].b.x *= 10.0f;
-        cube->tris[i].b.y *= 10.0f;
-        cube->tris[i].b.z *= 10.0f;
+        cube->tris[i].a.x = cube->tris[i].a.x * 10.0f + x;
+        cube->tris[i].a.y = cube->tris[i].a.y * 10.0f + y;
+        cube->tris[i].a.z = cube->tris[i].a.z * 10.0f + z;
 
-        cube->tris[i].c.x *= 10.0f;
-        cube->tris[i].c.y *= 10.0f;
-        cube->tris[i].c.z *= 10.0f;
+        cube->tris[i].b.x = cube->tris[i].b.x * 10.0f + x;
+        cube->tris[i].b.y = cube->tris[i].b.y * 10.0f + y;
+        cube->tris[i].b.z = cube->tris[i].b.z * 10.0f + z;
+
+        cube->tris[i].c.x = cube->tris[i].c.x * 10.0f + x;
+        cube->tris[i].c.y = cube->tris[i].c.y * 10.0f + y;
+        cube->tris[i].c.z = cube->tris[i].c.z * 10.0f + z;
     }
 
     return cube;

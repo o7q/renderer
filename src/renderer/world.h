@@ -1,7 +1,7 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include "math/geometry/geometry.h"
+#include "math/geometry/types.h"
 
 struct World
 {

@@ -8,13 +8,25 @@
 
 int main(void)
 {
-    struct World *world = world_create(100000);
+    struct World *world = world_create(1000);
     struct Camera *camera = camera_create();
     struct Viewport *viewport = viewport_create(100, 60);
 
-    struct Mesh *cube = mesh_create_cube();
+    // for (int z = 0; z < 5; ++z)
+    // {
+    //     for (int y = 0; y < 5; ++y)
+    //     {
+    //         for (int x = 0; x < 5; ++x)
+    //         {
+    //             struct Mesh *cube = mesh_create_cube(x * 20, y * 20, z * 20);
+    //             world_add_mesh(world, cube);
+    //         }
+    //     }
+    // }
 
+    struct Mesh *cube = mesh_create_cube(0, 0, 0);
     world_add_mesh(world, cube);
+
     bool running = true;
 
     while (running)

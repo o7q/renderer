@@ -6,8 +6,7 @@
 #include "renderer/render.h"
 #include "renderer/viewport.h"
 #include "renderer/world.h"
-#include "renderer/math/geometry/geometry.h"
-#include "renderer/math/angle.h"
-#include "renderer/math/matrix.h"
+#include "renderer/math/geometry/mesh.h"
+#include "renderer/math/geometry/types.h"
 
 #endif

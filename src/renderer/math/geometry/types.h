@@ -1,5 +1,5 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef TYPES_H
+#define TYPES_H
 
 struct Vec3
 {
@@ -20,9 +20,5 @@ struct Mesh
     int tri_count;
     struct Triangle *tris;
 };
-
-struct Mesh *mesh_create_cube();
-
-void mesh_delete(struct Mesh *mesh);
 
 #endif

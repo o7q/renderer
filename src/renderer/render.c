@@ -8,73 +8,12 @@
 
 #include "math/matrix.h"
 #include "math/angle.h"
-
-static struct Mat2 *render_create_projection_matrix(struct Camera *camera, struct Viewport *viewport)
-{
-    float fovRad = 1.0f / tanf(degrees_to_radians(camera->fov / 2.0f));
-
-    struct Mat2 *projection_matrix = mat2_create(4, 4, MAT2_FLOAT);
-
-    mat2_write_float(projection_matrix, 0, 0, viewport->aspect * fovRad);
-    mat2_write_float(projection_matrix, 1, 1, fovRad);
-    mat2_write_float(projection_matrix, 2, 2, camera->clip_far / (camera->clip_far - camera->clip_near));
-    mat2_write_float(projection_matrix, 3, 2, (-camera->clip_far * camera->clip_near) / (camera->clip_far - camera->clip_near));
-    mat2_write_float(projection_matrix, 2, 3, 1.0f);
-    mat2_write_float(projection_matrix, 3, 3, 0.0f);
-
-    return projection_matrix;
-}
-
-static struct Mat2 *render_create_x_rotation_matrix(struct Camera *camera)
-{
-    float angle_radians = degrees_to_radians(camera->rotation.x);
-
-    struct Mat2 *x_rot_matrix = mat2_create(4, 4, MAT2_FLOAT);
-
-    mat2_write_float(x_rot_matrix, 0, 0, 1.0f);
-    mat2_write_float(x_rot_matrix, 1, 1, cosf(angle_radians));
-    mat2_write_float(x_rot_matrix, 1, 2, sinf(angle_radians));
-    mat2_write_float(x_rot_matrix, 2, 1, -sinf(angle_radians));
-    mat2_write_float(x_rot_matrix, 2, 2, cosf(angle_radians));
-    mat2_write_float(x_rot_matrix, 3, 3, 1.0f);
-
-    return x_rot_matrix;
-}
-
-static struct Mat2 *render_create_y_rotation_matrix(struct Camera *camera)
-{
-    float angle_radians = degrees_to_radians(camera->rotation.y);
-
-    struct Mat2 *y_rot_matrix = mat2_create(4, 4, MAT2_FLOAT);
-
-    mat2_write_float(y_rot_matrix, 0, 0, cosf(angle_radians));
-    mat2_write_float(y_rot_matrix, 0, 2, sinf(angle_radians));
-    mat2_write_float(y_rot_matrix, 1, 1, 1.0f);
-    mat2_write_float(y_rot_matrix, 2, 0, -sinf(angle_radians));
-    mat2_write_float(y_rot_matrix, 2, 2, cosf(angle_radians));
-    mat2_write_float(y_rot_matrix, 3, 3, 1.0f);
-
-    return y_rot_matrix;
-}
-
-static struct Mat2 *render_create_z_rotation_matrix(struct Camera *camera)
-{
-    float angle_radians = degrees_to_radians(camera->rotation.z);
-
-    struct Mat2 *z_rot_matrix = mat2_create(4, 4, MAT2_FLOAT);
-
-    mat2_write_float(z_rot_matrix, 0, 0, cosf(angle_radians));
-    mat2_write_float(z_rot_matrix, 0, 1, sinf(angle_radians));
-    mat2_write_float(z_rot_matrix, 1, 0, -sinf(angle_radians));
-    mat2_write_float(z_rot_matrix, 1, 1, cosf(angle_radians));
-    mat2_write_float(z_rot_matrix, 2, 2, 1.0f);
-    mat2_write_float(z_rot_matrix, 3, 3, 1.0f);
-
-    return z_rot_matrix;
-}
+#include "math/vector.h"
+#include "math/matrix_math.h"
 
 static void render_draw_line(struct Mat2 *render_projection, int x1, int y1, int x2, int y2)
 {
+    // a simple line drawing algorithm
     float dx = x2 - x1;
     float dy = y2 - y1;
 
@@ -103,61 +42,88 @@ static struct Mat2 *render_project(struct World *world, struct Camera *camera, s
 {
     struct Mat2 *render_projection = mat2_create(viewport->height, viewport->width, MAT2_FLOAT);
 
-    struct Mat2 *projection_matrix = render_create_projection_matrix(camera, viewport);
+    struct Mat2 *projection_matrix = matrix_create_projection(camera->fov, viewport->aspect, camera->clip_near, camera->clip_far);
 
-    struct Mat2 *x_rot_matrix = render_create_x_rotation_matrix(camera);
-    struct Mat2 *y_rot_matrix = render_create_y_rotation_matrix(camera);
-    struct Mat2 *z_rot_matrix = render_create_z_rotation_matrix(camera);
+    struct Mat2 *x_rot_matrix = matrix_create_x_rotation(camera->rotation.x);
+    struct Mat2 *y_rot_matrix = matrix_create_y_rotation(camera->rotation.y);
+    struct Mat2 *z_rot_matrix = matrix_create_z_rotation(camera->rotation.z);
 
     for (int i = 0; i < world->tri_index; ++i)
     {
+        // setup vectors for rotations
         struct Triangle tri = world->tris[i];
-        struct Triangle tri_rotated_x = tri;
-        struct Triangle tri_rotated_xy = tri;
-        struct Triangle tri_rotated_xyz = tri;
 
-        struct Triangle tri_rotated_projected = tri;
+        // we will be stacking rotations upon eachother, starting first with the x-axis
 
-        vec3_multiply_mat2_4x4(x_rot_matrix, tri.a, &tri_rotated_x.a);
-        vec3_multiply_mat2_4x4(x_rot_matrix, tri.b, &tri_rotated_x.b);
-        vec3_multiply_mat2_4x4(x_rot_matrix, tri.c, &tri_rotated_x.c);
+        // rotate on the x-axis
+        struct Triangle tri_rotated_x = (struct Triangle){matrix_multiply_vector_4x4(x_rot_matrix, &tri.a),
+                                                          matrix_multiply_vector_4x4(x_rot_matrix, &tri.b),
+                                                          matrix_multiply_vector_4x4(x_rot_matrix, &tri.c)};
 
-        vec3_multiply_mat2_4x4(y_rot_matrix, tri_rotated_x.a, &tri_rotated_xy.a);
-        vec3_multiply_mat2_4x4(y_rot_matrix, tri_rotated_x.b, &tri_rotated_xy.b);
-        vec3_multiply_mat2_4x4(y_rot_matrix, tri_rotated_x.c, &tri_rotated_xy.c);
+        // rotate on the y-axis
+        struct Triangle tri_rotated_xy = (struct Triangle){matrix_multiply_vector_4x4(y_rot_matrix, &tri_rotated_x.a),
+                                                           matrix_multiply_vector_4x4(y_rot_matrix, &tri_rotated_x.b),
+                                                           matrix_multiply_vector_4x4(y_rot_matrix, &tri_rotated_x.c)};
 
-        vec3_multiply_mat2_4x4(z_rot_matrix, tri_rotated_xy.a, &tri_rotated_xyz.a);
-        vec3_multiply_mat2_4x4(z_rot_matrix, tri_rotated_xy.b, &tri_rotated_xyz.b);
-        vec3_multiply_mat2_4x4(z_rot_matrix, tri_rotated_xy.c, &tri_rotated_xyz.c);
+        // finally, rotate on the z-axis
+        struct Triangle tri_rotated_xyz = (struct Triangle){matrix_multiply_vector_4x4(z_rot_matrix, &tri_rotated_xy.a),
+                                                            matrix_multiply_vector_4x4(z_rot_matrix, &tri_rotated_xy.b),
+                                                            matrix_multiply_vector_4x4(z_rot_matrix, &tri_rotated_xy.c)};
 
-        vec3_multiply_mat2_4x4(projection_matrix, (struct Vec3){tri_rotated_xyz.a.x + camera->position.x, tri_rotated_xyz.a.y + camera->position.y, tri_rotated_xyz.a.z + camera->position.z}, &tri_rotated_projected.a);
-        vec3_multiply_mat2_4x4(projection_matrix, (struct Vec3){tri_rotated_xyz.b.x + camera->position.x, tri_rotated_xyz.b.y + camera->position.y, tri_rotated_xyz.b.z + camera->position.z}, &tri_rotated_projected.b);
-        vec3_multiply_mat2_4x4(projection_matrix, (struct Vec3){tri_rotated_xyz.c.x + camera->position.x, tri_rotated_xyz.c.y + camera->position.y, tri_rotated_xyz.c.z + camera->position.z}, &tri_rotated_projected.c);
+        // translate the point
+        struct Triangle tri_rotated_translated = tri_rotated_xyz;
+        tri_rotated_translated.a = (struct Vec3){tri_rotated_xyz.a.x + 10, tri_rotated_xyz.a.y + 20, tri_rotated_xyz.a.z + 30};
+        tri_rotated_translated.b = (struct Vec3){tri_rotated_xyz.b.x + 10, tri_rotated_xyz.b.y + 20, tri_rotated_xyz.b.z + 30};
+        tri_rotated_translated.c = (struct Vec3){tri_rotated_xyz.c.x + 10, tri_rotated_xyz.c.y + 20, tri_rotated_xyz.c.z + 30};
 
-        tri_rotated_projected.a.x += 1.0f;
-        tri_rotated_projected.a.y += 1.0f;
-        tri_rotated_projected.b.x += 1.0f;
-        tri_rotated_projected.b.y += 1.0f;
-        tri_rotated_projected.c.x += 1.0f;
-        tri_rotated_projected.c.y += 1.0f;
+        struct Vec3 line1 = vec3_subtract(&tri_rotated_translated.b, &tri_rotated_translated.a);
+        struct Vec3 line2 = vec3_subtract(&tri_rotated_translated.c, &tri_rotated_translated.a);
 
-        tri_rotated_projected.a.x *= 0.5f * (float)viewport->width;
-        tri_rotated_projected.a.y *= 0.5f * (float)viewport->height;
-        tri_rotated_projected.b.x *= 0.5f * (float)viewport->width;
-        tri_rotated_projected.b.y *= 0.5f * (float)viewport->height;
-        tri_rotated_projected.c.x *= 0.5f * (float)viewport->width;
-        tri_rotated_projected.c.y *= 0.5f * (float)viewport->height;
+        // the normal of the triangle, which is not yet normalized
+        struct Vec3 normal = vec3_cross(&line1, &line2);
 
-        render_draw_line(render_projection, (int)tri_rotated_projected.a.x, (int)tri_rotated_projected.a.y, (int)tri_rotated_projected.b.x, (int)tri_rotated_projected.b.y);
-        render_draw_line(render_projection, (int)tri_rotated_projected.b.x, (int)tri_rotated_projected.b.y, (int)tri_rotated_projected.c.x, (int)tri_rotated_projected.c.y);
-        render_draw_line(render_projection, (int)tri_rotated_projected.c.x, (int)tri_rotated_projected.c.y, (int)tri_rotated_projected.a.x, (int)tri_rotated_projected.a.y);
+        // let's normalize the normal!
+        struct Vec3 normal_normalized = vec3_normalize(&normal);
 
-        mat2_write_float(render_projection, (int)tri_rotated_projected.a.y, (int)tri_rotated_projected.a.x, 1.0f);
-        mat2_write_float(render_projection, (int)tri_rotated_projected.b.y, (int)tri_rotated_projected.b.x, 1.0f);
-        mat2_write_float(render_projection, (int)tri_rotated_projected.c.y, (int)tri_rotated_projected.c.x, 1.0f);
+        // if (1)
+        if (normal_normalized.x * (tri_rotated_translated.a.x - camera->position.x) +
+                normal_normalized.y * (tri_rotated_translated.a.y - camera->position.y) +
+                normal_normalized.z * (tri_rotated_translated.a.z - camera->position.z) <
+            0.0f)
+        {
+            struct Triangle tri_rotated_projected = (struct Triangle){matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.a),
+                                                                      matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.b),
+                                                                      matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.c)};
+
+            tri_rotated_projected.a.x += 1.0f;
+            tri_rotated_projected.a.y += 1.0f;
+            tri_rotated_projected.b.x += 1.0f;
+            tri_rotated_projected.b.y += 1.0f;
+            tri_rotated_projected.c.x += 1.0f;
+            tri_rotated_projected.c.y += 1.0f;
+
+            tri_rotated_projected.a.x *= 0.5f * (float)viewport->width;
+            tri_rotated_projected.a.y *= 0.5f * (float)viewport->height;
+            tri_rotated_projected.b.x *= 0.5f * (float)viewport->width;
+            tri_rotated_projected.b.y *= 0.5f * (float)viewport->height;
+            tri_rotated_projected.c.x *= 0.5f * (float)viewport->width;
+            tri_rotated_projected.c.y *= 0.5f * (float)viewport->height;
+
+            render_draw_line(render_projection, (int)tri_rotated_projected.a.x, (int)tri_rotated_projected.a.y, (int)tri_rotated_projected.b.x, (int)tri_rotated_projected.b.y);
+            render_draw_line(render_projection, (int)tri_rotated_projected.b.x, (int)tri_rotated_projected.b.y, (int)tri_rotated_projected.c.x, (int)tri_rotated_projected.c.y);
+            render_draw_line(render_projection, (int)tri_rotated_projected.c.x, (int)tri_rotated_projected.c.y, (int)tri_rotated_projected.a.x, (int)tri_rotated_projected.a.y);
+
+            mat2_write_float(render_projection, (int)tri_rotated_projected.a.y, (int)tri_rotated_projected.a.x, 1.0f);
+            mat2_write_float(render_projection, (int)tri_rotated_projected.b.y, (int)tri_rotated_projected.b.x, 1.0f);
+            mat2_write_float(render_projection, (int)tri_rotated_projected.c.y, (int)tri_rotated_projected.c.x, 1.0f);
+        }
     }
 
+    // clean up matricies
     mat2_delete(projection_matrix);
+    mat2_delete(x_rot_matrix);
+    mat2_delete(y_rot_matrix);
+    mat2_delete(z_rot_matrix);
 
     return render_projection;
 }
