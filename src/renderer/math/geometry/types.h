@@ -6,6 +6,9 @@ struct Vec3
     float x;
     float y;
     float z;
+
+    // extra value, helpful for some matrix operations
+    float w;
 };
 
 struct Triangle

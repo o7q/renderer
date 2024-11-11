@@ -9,7 +9,7 @@
 #include "math/matrix.h"
 #include "math/angle.h"
 #include "math/vector.h"
-#include "math/matrix_math.h"
+#include "math/matrix_utils.h"
 
 static void render_draw_line(struct Mat2 *render_projection, int x1, int y1, int x2, int y2)
 {
@@ -85,11 +85,10 @@ static struct Mat2 *render_project(struct World *world, struct Camera *camera, s
         // let's normalize the normal!
         struct Vec3 normal_normalized = vec3_normalize(&normal);
 
+        struct Vec3 camera_ray = vec3_subtract(&tri_rotated_translated.a, &camera->position);
+
         // if (1)
-        if (normal_normalized.x * (tri_rotated_translated.a.x - camera->position.x) +
-                normal_normalized.y * (tri_rotated_translated.a.y - camera->position.y) +
-                normal_normalized.z * (tri_rotated_translated.a.z - camera->position.z) <
-            0.0f)
+        if (vec3_dot(&normal, &camera_ray) < 0.0f)
         {
             struct Triangle tri_rotated_projected = (struct Triangle){matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.a),
                                                                       matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.b),
