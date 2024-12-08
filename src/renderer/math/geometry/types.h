@@ -7,8 +7,8 @@ struct Vec3
     float y;
     float z;
 
-    // extra value, helpful for some matrix operations
-    float w;
+    // we are using the homogeneous coordinate system for transformations
+    float w; // thus: w
 };
 
 struct Triangle

@@ -94,6 +94,11 @@ static struct Mat2 *render_project(struct World *world, struct Camera *camera, s
                                                                       matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.b),
                                                                       matrix_multiply_vector_4x4(projection_matrix, &tri_rotated_translated.c)};
 
+            // normalize
+            tri_rotated_projected.a = vec3_divide_float(&tri_rotated_projected.a, tri_rotated_projected.a.w);
+            tri_rotated_projected.b = vec3_divide_float(&tri_rotated_projected.b, tri_rotated_projected.b.w);
+            tri_rotated_projected.c = vec3_divide_float(&tri_rotated_projected.c, tri_rotated_projected.c.w);
+
             tri_rotated_projected.a.x += 1.0f;
             tri_rotated_projected.a.y += 1.0f;
             tri_rotated_projected.b.x += 1.0f;
